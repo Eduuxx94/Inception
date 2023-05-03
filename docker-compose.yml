@@ -1,77 +1,63 @@
-version: "3.9"
+version: '3.7'
 
 services:
+
   mariadb:
     build:
-      context: ./mariadb
-      dockerfile: Dockerfile
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: example
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: wordpress
-      MYSQL_PASSWORD: wordpress
+      context: ./requirements/mariadb
+    image: mariadb
+    env_file:
+      - .env
     volumes:
-      - volume_maria_db:/var/lib/mysql
-      # - type: bind
-      #   bind:
-      #     propagation: shared
-      #   source: /home/ede-alme/data/mariadb
-      #   target: /var/lib/mysql
+      - mysql_vol:/var/lib/mysql
     networks:
-      docker_network:
-        aliases:
-          - db
-
-  nginx:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      docker_network:
-        aliases:
-          - ede-alme.42.fr
-    # volumes:
-    #   - maridb_vol:/var/www/html
-    depends_on:
-      - wordpress
+      - inception_network
+    restart: on-failure
 
   wordpress:
     build:
-      context: ./wordpress
-      dockerfile: Dockerfile
-    ports:
-      - "8080:80"
-    networks:
-      docker_network:
-        aliases:
-          - wordpress
-    # volumes:
-    #   - /home/ede-alme/data/wordpress/:/var/www/html
-    environment:
-      WORDPRESS_DB_HOST: mariadb
-      WORDPRESS_DB_NAME: wordpress
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: wordpress
+      context: ./requirements/wordpress
+    image: wordpress
     depends_on:
       - mariadb
+    env_file:
+      - .env
+    volumes:
+      - wordpress_vol:/var/www/html/wordpress
+    networks:
+      - inception_network
+    restart: on-failure
 
-networks:
-  docker_network:
-    name: docker_network
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: "172.18.0.2/16"
+  nginx:
+    build:
+      context: ./requirements/nginx
+    image: nginx
+    volumes:
+      - wordpress_vol:/var/www/html/wordpress
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
+    networks:
+      - inception_network
+    restart: on-failure
 
 volumes:
-  volume_maria_db:
+  mysql_vol:
     driver: local
     driver_opts:
       type: none
-      device: /home/ede-alme/data/mariadb
+      device: /home/ede-alme/data/mysql
       o: bind
+    name: mysql_vol
+  
+  wordpress_vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/ede-alme/data/wordpress
+      o: bind
+    name: wordpress_vol
+
+networks:
+  inception_network:
