@@ -1,0 +1,77 @@
+version: "3.9"
+
+services:
+  mariadb:
+    build:
+      context: ./mariadb
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - volume_maria_db:/var/lib/mysql
+      # - type: bind
+      #   bind:
+      #     propagation: shared
+      #   source: /home/ede-alme/data/mariadb
+      #   target: /var/lib/mysql
+    networks:
+      docker_network:
+        aliases:
+          - db
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      docker_network:
+        aliases:
+          - ede-alme.42.fr
+    # volumes:
+    #   - maridb_vol:/var/www/html
+    depends_on:
+      - wordpress
+
+  wordpress:
+    build:
+      context: ./wordpress
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    networks:
+      docker_network:
+        aliases:
+          - wordpress
+    # volumes:
+    #   - /home/ede-alme/data/wordpress/:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    depends_on:
+      - mariadb
+
+networks:
+  docker_network:
+    name: docker_network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.18.0.2/16"
+
+volumes:
+  volume_maria_db:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/ede-alme/data/mariadb
+      o: bind
