@@ -6,7 +6,7 @@ RUN apt update \
 
 COPY ./tools/script.sh .
 
-COPY ./tools/db_script.sql /etc/mysql/conf.d/
+COPY ./conf/db_script.sql /etc/mysql/conf.d/
 
 RUN chmod +x /script.sh
 

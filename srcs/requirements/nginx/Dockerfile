@@ -4,9 +4,9 @@ RUN apt-get update -y && apt-get install -y nginx openssl
 
 # Copy the default configuration file to /etc/nginx/conf.d/default.conf
 RUN rm /etc/nginx/nginx.conf
-COPY ./default.conf /etc/nginx/nginx.conf
+COPY ./conf/default.conf /etc/nginx/nginx.conf
 
-COPY nginx_start.sh /usr/local/bin
+COPY ./tools/nginx_start.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/nginx_start.sh
 
 RUN mkdir -p /etc/nginx/ssl
